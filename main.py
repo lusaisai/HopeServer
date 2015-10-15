@@ -48,10 +48,15 @@ class MainHandler(webapp2.RequestHandler):
 
     @staticmethod
     def setup_response_info(incoming, outgoing):
-        headers_to_keep = {'Content-Encoding', 'Content-Length'}
+        headers_to_keep = {'content-encoding', 'content-length'}
         for header in incoming.headers:
             if header not in headers_to_keep:
-                outgoing.headers[header] = incoming.headers[header]
+                if header == 'set-cookie':
+                    for index, value in enumerate(incoming.header_msg.getheaders(header)):
+                        cookie_header = header + '-' + str(index)
+                        outgoing.headers[cookie_header] = value
+                else:
+                    outgoing.headers[header] = incoming.headers[header]
         outgoing.status = incoming.status_code
 
 
