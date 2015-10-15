@@ -20,30 +20,46 @@ from google.appengine.api import urlfetch
 
 class MainHandler(webapp2.RequestHandler):
     def get(self):
-        if "target_url" not in self.request.headers:
-            return self.response
+        headers = self.setup_headers()
+        r = urlfetch.fetch(self.request.headers["target_url"], headers=headers, method=urlfetch.GET,
+                           follow_redirects=False)
+        self.setup_response_info(r, self.response)
+        self.response.body = r.content
 
-        headers_to_remove = {"Target-Url", "Host"}
+        return self.response
+
+    def post(self):
+        headers = self.setup_headers()
+        form_data = self.request.body
+        r = urlfetch.fetch(self.request.headers["target_url"], headers=headers, method=urlfetch.POST,
+                           payload=form_data, follow_redirects=False)
+        self.setup_response_info(r, self.response)
+        self.response.body = r.content
+
+        return self.response
+
+    def setup_headers(self):
+        headers_to_remove = {"Target-Url", "Host", 'Content-Length'}
         headers = {key: value for key, value in self.request.headers.items() if key not in headers_to_remove}
         if self.request.cookies:
             headers['Cookie'] = ';'.join(["%s=%s" % (key, value) for key, value in self.request.cookies.items()])
 
-        if self.request.method == 'GET':
-            r = urlfetch.fetch(self.request.headers["target_url"], headers=headers, follow_redirects=False)
-            setup_response_info(r, self.response)
-            self.response.body = r.content
+        return headers
 
-        return self.response
+    @staticmethod
+    def setup_response_info(incoming, outgoing):
+        headers_to_keep = {'Content-Encoding', 'Content-Length'}
+        for header in incoming.headers:
+            if header not in headers_to_keep:
+                outgoing.headers[header] = incoming.headers[header]
+        outgoing.status = incoming.status_code
 
 
-def setup_response_info(incoming, outgoing):
-    headers_to_keep = {'Content-Encoding', 'Content-Length'}
-    for header in incoming.headers:
-        if header not in headers_to_keep:
-            outgoing.headers[header] = incoming.headers[header]
-    outgoing.status = incoming.status_code
-
+class HomeHandler(webapp2.RequestHandler):
+    def get(self):
+        self.response.write("Hope cannot be blocked")
 
 app = webapp2.WSGIApplication([
-    ('/', MainHandler)
+    ('/', HomeHandler),
+    ('/hope/', MainHandler)
 ], debug=True)
