@@ -19,24 +19,42 @@ from google.appengine.api import urlfetch
 
 
 class MainHandler(webapp2.RequestHandler):
-    def get(self):
+    def get_general(self, method):
         headers = self.setup_headers()
-        r = urlfetch.fetch(self.request.headers["target_url"], headers=headers, method=urlfetch.GET,
+        r = urlfetch.fetch(self.request.headers["target_url"], headers=headers, method=method,
                            follow_redirects=False)
         self.setup_response_info(r, self.response)
-        self.response.body = r.content
 
+        return r
+
+    def get(self):
+        r = self.get_general(urlfetch.GET)
+        self.response.body = r.content
         return self.response
 
-    def post(self):
+    def head(self):
+        self.get_general(urlfetch.HEAD)
+        return self.response
+
+    def post_general(self, method):
         headers = self.setup_headers()
         form_data = self.request.body
-        r = urlfetch.fetch(self.request.headers["target_url"], headers=headers, method=urlfetch.POST,
+        r = urlfetch.fetch(self.request.headers["target_url"], headers=headers, method=method,
                            payload=form_data, follow_redirects=False)
         self.setup_response_info(r, self.response)
         self.response.body = r.content
 
+    def post(self):
+        self.post_general(urlfetch.POST)
         return self.response
+
+    def put(self):
+        self.post_general(urlfetch.PUT)
+        return self.response
+
+    def delete(self):
+        r = self.get_general(urlfetch.DELETE)
+        self.response.body = r.content
 
     def setup_headers(self):
         headers_to_remove = {"Target-Url", "Host", 'Content-Length'}
