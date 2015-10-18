@@ -33,7 +33,8 @@ class MainHandler(webapp2.RequestHandler):
         return self.response
 
     def head(self):
-        self.get_general(urlfetch.HEAD)
+        r = self.get_general(urlfetch.HEAD)
+        self.response.headers['source-content-length'] = r.headers['content-length']
         return self.response
 
     def post_general(self, method):
