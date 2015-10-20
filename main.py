@@ -15,6 +15,7 @@
 # limitations under the License.
 #
 import webapp2
+import re
 from google.appengine.api import urlfetch
 
 
@@ -66,8 +67,7 @@ class MainHandler(webapp2.RequestHandler):
 
         return headers
 
-    @staticmethod
-    def setup_response_info(incoming, outgoing):
+    def setup_response_info(self, incoming, outgoing):
         headers_to_keep = {'content-encoding', 'content-length'}
         for header in incoming.headers:
             if header not in headers_to_keep:
@@ -77,7 +77,13 @@ class MainHandler(webapp2.RequestHandler):
                         outgoing.headers[cookie_header] = value
                 else:
                     outgoing.headers[header] = incoming.headers[header]
+
         outgoing.status = incoming.status_code
+
+        if 'location' in outgoing.headers and outgoing.headers['location'].startswith('/'):
+            m = re.search(r'https?://[^/]*', self.request.headers['Target-Url'])
+            if m:
+                outgoing.headers['location'] = m.group() + outgoing.headers['location']
 
 
 class HomeHandler(webapp2.RequestHandler):
