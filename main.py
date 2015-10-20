@@ -80,10 +80,16 @@ class MainHandler(webapp2.RequestHandler):
 
         outgoing.status = incoming.status_code
 
-        if 'location' in outgoing.headers and outgoing.headers['location'].startswith('/'):
-            m = re.search(r'https?://[^/]*', self.request.headers['Target-Url'])
-            if m:
-                outgoing.headers['location'] = m.group() + outgoing.headers['location']
+        if 'location' in outgoing.headers and not outgoing.headers['location'].startswith('http'):
+            location = outgoing.headers['location']
+            target_url = self.request.headers['Target-Url']
+            try:
+                if location.startswith('/'):
+                    outgoing.headers['location'] = re.search(r'https?://[^/]*', target_url).group() + location
+                else:
+                    outgoing.headers['location'] = re.search(r'https?://.*/', target_url).group() + location
+            except AttributeError:
+                pass
 
 
 class HomeHandler(webapp2.RequestHandler):
