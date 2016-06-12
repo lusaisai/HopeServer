@@ -16,6 +16,7 @@
 #
 import webapp2
 import re
+import logging
 from google.appengine.api import urlfetch
 
 
@@ -60,6 +61,7 @@ class MainHandler(webapp2.RequestHandler):
         self.response.body = r.content
 
     def setup_headers(self):
+        logging.info("Target URL: %s" % self.request.headers['Target-Url'])
         headers_to_remove = {"Target-Url", "Host", 'Content-Length'}
         headers = {key: value for key, value in self.request.headers.items() if key not in headers_to_remove}
         if self.request.cookies:
